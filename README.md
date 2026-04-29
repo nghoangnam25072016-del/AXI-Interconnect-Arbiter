@@ -14,8 +14,9 @@ Slave outputs alternate between Master 0 and Master 1:
 
 This confirms both fairness and correct data routing.
 
-sim/interconnect_waveform.png
+![Interconnect Waveform](sim/interconnect_waveform.png)
 
 
 ## Stress Test
 The arbiter was tested under simultaneous master requests and randomized slave backpressure. Grant counters confirmed fair round-robin behavior with no starvation.
+![Interconnect Waveform](sim/interconnect_waveform_after_add_stress_test.png)
