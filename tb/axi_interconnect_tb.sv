@@ -172,4 +172,96 @@ final begin
     $display("M1 count = %0d", m1_count);
 end
 
+    // Master 0 Read
+logic [31:0] m0_araddr;
+logic        m0_arvalid;
+logic        m0_arready;
+logic [31:0] m0_rdata;
+logic        m0_rvalid;
+logic        m0_rready;
+
+// Master 1 Read
+logic [31:0] m1_araddr;
+logic        m1_arvalid;
+logic        m1_arready;
+logic [31:0] m1_rdata;
+logic        m1_rvalid;
+logic        m1_rready;
+
+// Slave Read
+logic [31:0] s_araddr;
+logic        s_arvalid;
+logic        s_arready;
+logic [31:0] s_rdata;
+logic        s_rvalid;
+logic        s_rready;
+
+ //  READ PART 
+        .m0_araddr(m0_araddr),
+        .m0_arvalid(m0_arvalid),
+        .m0_arready(m0_arready),
+        .m0_rdata(m0_rdata),
+        .m0_rvalid(m0_rvalid),
+        .m0_rready(m0_rready),
+
+        .m1_araddr(m1_araddr),
+        .m1_arvalid(m1_arvalid),
+        .m1_arready(m1_arready),
+        .m1_rdata(m1_rdata),
+        .m1_rvalid(m1_rvalid),
+        .m1_rready(m1_rready),
+
+        .s_araddr(s_araddr),
+        .s_arvalid(s_arvalid),
+        .s_arready(s_arready),
+        .s_rdata(s_rdata),
+        .s_rvalid(s_rvalid),
+        .s_rready(s_rready),
+
+        // Slave write
+        .s_awaddr(s_awaddr),
+        .s_awvalid(s_awvalid),
+        .s_awready(s_awready),
+
+        .s_wdata(s_wdata),
+        .s_wvalid(s_wvalid),
+        .s_wready(s_wready)
+
+    always @(posedge clk) begin
+    s_arready <= 1;
+
+    if (s_arvalid && s_arready) begin
+        s_rdata  <= s_araddr + 32'h100;
+        s_rvalid <= 1;
+    end
+    else if (s_rready) begin
+        s_rvalid <= 0;
+    end
+end
+
+    m0_araddr  = 32'h1000;
+m0_arvalid = 0;
+m0_rready  = 1;
+
+m1_araddr  = 32'h2000;
+m1_arvalid = 0;
+m1_rready  = 1;
+    @(posedge rst_n);
+
+m0_arvalid = 1;
+m1_arvalid = 1;
+
+#200;
+
+m0_arvalid = 0;
+m1_arvalid = 0;
+    
+    always @(posedge clk) begin
+    if (m0_rvalid)
+        $display("M0 READ DATA: %h", m0_rdata);
+
+    if (m1_rvalid)
+        $display("M1 READ DATA: %h", m1_rdata);
+end
+
     endmodule
