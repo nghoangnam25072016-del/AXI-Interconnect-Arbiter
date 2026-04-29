@@ -171,4 +171,17 @@ always_comb begin
         s_rready  = m1_rready;
     end
 end
+
+
+    // Read address channel
+assign s_arvalid = (grant0 & m0_arvalid) |
+                   (grant1 & m1_arvalid);
+
+assign s_araddr  = grant1 ? m1_araddr :
+                   grant0 ? m0_araddr :
+                   32'h0;
+
+// Ready back to masters
+assign m0_arready = grant0 & s_arready;
+assign m1_arready = grant1 & s_arready;
 endmodule
