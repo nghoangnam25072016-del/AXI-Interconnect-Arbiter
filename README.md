@@ -20,3 +20,7 @@ This confirms both fairness and correct data routing.
 ## Stress Test
 The arbiter was tested under simultaneous master requests and randomized slave backpressure. Grant counters confirmed fair round-robin behavior with no starvation.
 ![Interconnect Waveform](sim/interconnect_waveform_after_add_stress_test.png)
+
+
+
+## Add AXI-Lite Read Channel
