@@ -1,2 +1,3 @@
-# AXI-Interconnect-Arbiter
-2 AXI-lite masters → 1 AXI-lite slave, use round-robin arbiter
+# AXI Interconnect / Round-Robin Arbiter
+
+A 2-master to 1-slave AXI-lite interconnect with round-robin arbitration.
