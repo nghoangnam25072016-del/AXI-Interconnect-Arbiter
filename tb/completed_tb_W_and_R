@@ -1,0 +1,282 @@
+`timescale 1ns/1ps
+
+module axi_interconnect_tb;
+
+    logic clk;
+    logic rst_n;
+
+    // Master 0 Write
+    logic [31:0] m0_awaddr;
+    logic        m0_awvalid;
+    logic        m0_awready;
+    logic [31:0] m0_wdata;
+    logic        m0_wvalid;
+    logic        m0_wready;
+
+    // Master 1 Write
+    logic [31:0] m1_awaddr;
+    logic        m1_awvalid;
+    logic        m1_awready;
+    logic [31:0] m1_wdata;
+    logic        m1_wvalid;
+    logic        m1_wready;
+
+    // Slave Write
+    logic [31:0] s_awaddr;
+    logic        s_awvalid;
+    logic        s_awready;
+    logic [31:0] s_wdata;
+    logic        s_wvalid;
+    logic        s_wready;
+
+    // Master 0 Read
+    logic [31:0] m0_araddr;
+    logic        m0_arvalid;
+    logic        m0_arready;
+    logic [31:0] m0_rdata;
+    logic        m0_rvalid;
+    logic        m0_rready;
+
+    // Master 1 Read
+    logic [31:0] m1_araddr;
+    logic        m1_arvalid;
+    logic        m1_arready;
+    logic [31:0] m1_rdata;
+    logic        m1_rvalid;
+    logic        m1_rready;
+
+    // Slave Read
+    logic [31:0] s_araddr;
+    logic        s_arvalid;
+    logic        s_arready;
+    logic [31:0] s_rdata;
+    logic        s_rvalid;
+    logic        s_rready;
+
+    int m0_write_count;
+    int m1_write_count;
+    int m0_read_count;
+    int m1_read_count;
+    int read_error_count;
+
+    axi_interconnect_2x1 dut (
+        .clk(clk),
+        .rst_n(rst_n),
+
+        .m0_awaddr(m0_awaddr),
+        .m0_awvalid(m0_awvalid),
+        .m0_awready(m0_awready),
+        .m0_wdata(m0_wdata),
+        .m0_wvalid(m0_wvalid),
+        .m0_wready(m0_wready),
+
+        .m1_awaddr(m1_awaddr),
+        .m1_awvalid(m1_awvalid),
+        .m1_awready(m1_awready),
+        .m1_wdata(m1_wdata),
+        .m1_wvalid(m1_wvalid),
+        .m1_wready(m1_wready),
+
+        .s_awaddr(s_awaddr),
+        .s_awvalid(s_awvalid),
+        .s_awready(s_awready),
+        .s_wdata(s_wdata),
+        .s_wvalid(s_wvalid),
+        .s_wready(s_wready),
+
+        .m0_araddr(m0_araddr),
+        .m0_arvalid(m0_arvalid),
+        .m0_arready(m0_arready),
+        .m0_rdata(m0_rdata),
+        .m0_rvalid(m0_rvalid),
+        .m0_rready(m0_rready),
+
+        .m1_araddr(m1_araddr),
+        .m1_arvalid(m1_arvalid),
+        .m1_arready(m1_arready),
+        .m1_rdata(m1_rdata),
+        .m1_rvalid(m1_rvalid),
+        .m1_rready(m1_rready),
+
+        .s_araddr(s_araddr),
+        .s_arvalid(s_arvalid),
+        .s_arready(s_arready),
+        .s_rdata(s_rdata),
+        .s_rvalid(s_rvalid),
+        .s_rready(s_rready)
+    );
+
+    always #5 clk = ~clk;
+
+    initial begin
+        clk = 0;
+        rst_n = 0;
+
+        m0_write_count = 0;
+        m1_write_count = 0;
+        m0_read_count = 0;
+        m1_read_count = 0;
+        read_error_count = 0;
+
+        // Write init
+        m0_awaddr  = 32'h1000;
+        m0_awvalid = 0;
+        m0_wdata   = 32'hAAAA0000;
+        m0_wvalid  = 0;
+
+        m1_awaddr  = 32'h2000;
+        m1_awvalid = 0;
+        m1_wdata   = 32'hBBBB0000;
+        m1_wvalid  = 0;
+
+        s_awready = 1;
+        s_wready  = 1;
+
+        // Read init
+        m0_araddr  = 32'h1000;
+        m0_arvalid = 0;
+        m0_rready  = 1;
+
+        m1_araddr  = 32'h2000;
+        m1_arvalid = 0;
+        m1_rready  = 1;
+
+        s_arready = 0;
+        s_rvalid  = 0;
+        s_rdata   = 32'h0;
+
+        repeat (3) @(posedge clk);
+        rst_n = 1;
+
+        repeat (2) @(posedge clk);
+
+        // Simultaneous write requests
+        m0_awvalid = 1;
+        m0_wvalid  = 1;
+        m1_awvalid = 1;
+        m1_wvalid  = 1;
+
+        // Simultaneous read requests
+        m0_arvalid = 1;
+        m1_arvalid = 1;
+
+        repeat (20) @(posedge clk);
+
+        m0_awvalid = 0;
+        m0_wvalid  = 0;
+        m1_awvalid = 0;
+        m1_wvalid  = 0;
+
+        m0_arvalid = 0;
+        m1_arvalid = 0;
+
+        repeat (10) @(posedge clk);
+
+        $finish;
+    end
+
+    // Random write backpressure
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            s_awready <= 1'b0;
+            s_wready  <= 1'b0;
+        end
+        else begin
+            s_awready <= $urandom_range(0, 1);
+            s_wready  <= $urandom_range(0, 1);
+        end
+    end
+
+    // Fake slave read response
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            s_arready <= 1'b0;
+            s_rvalid  <= 1'b0;
+            s_rdata   <= 32'h0;
+        end
+        else begin
+            s_arready <= 1'b1;
+
+            if (s_arvalid && s_arready) begin
+                s_rdata  <= s_araddr + 32'h100;
+                s_rvalid <= 1'b1;
+            end
+            else if (s_rready) begin
+                s_rvalid <= 1'b0;
+            end
+        end
+    end
+
+    // Write monitor
+    always @(posedge clk) begin
+        if (m0_awready && m0_wready) begin
+            m0_write_count++;
+            $display("MASTER 0 WRITE GRANTED");
+        end
+
+        if (m1_awready && m1_wready) begin
+            m1_write_count++;
+            $display("MASTER 1 WRITE GRANTED");
+        end
+
+        if (s_awvalid && s_awready && s_wvalid && s_wready) begin
+            $display("SLAVE WRITE: addr=%h data=%h", s_awaddr, s_wdata);
+        end
+    end
+
+    // Read checker
+    always @(posedge clk) begin
+        if (m0_rvalid && m0_rready) begin
+            m0_read_count++;
+
+            if (m0_rdata !== 32'h1100) begin
+                read_error_count++;
+                $display("M0 READ FAIL: expected=00001100 actual=%h", m0_rdata);
+            end
+            else begin
+                $display("M0 READ PASS: data=%h", m0_rdata);
+            end
+        end
+
+        if (m1_rvalid && m1_rready) begin
+            m1_read_count++;
+
+            if (m1_rdata !== 32'h2100) begin
+                read_error_count++;
+                $display("M1 READ FAIL: expected=00002100 actual=%h", m1_rdata);
+            end
+            else begin
+                $display("M1 READ PASS: data=%h", m1_rdata);
+            end
+        end
+    end
+
+    initial begin
+        $dumpfile("axi_interconnect.vcd");
+        $dumpvars(0, axi_interconnect_tb);
+    end
+
+    final begin
+        $display("====================================");
+        $display("AXI INTERCONNECT TEST RESULT");
+        $display("M0 write grants = %0d", m0_write_count);
+        $display("M1 write grants = %0d", m1_write_count);
+        $display("M0 read count   = %0d", m0_read_count);
+        $display("M1 read count   = %0d", m1_read_count);
+        $display("Read errors     = %0d", read_error_count);
+
+        if (read_error_count == 0 &&
+            m0_write_count > 0 &&
+            m1_write_count > 0 &&
+            m0_read_count > 0 &&
+            m1_read_count > 0) begin
+            $display("AXI INTERCONNECT TEST PASS");
+        end
+        else begin
+            $display("AXI INTERCONNECT TEST FAIL");
+        end
+
+        $display("====================================");
+    end
+
+endmodule
