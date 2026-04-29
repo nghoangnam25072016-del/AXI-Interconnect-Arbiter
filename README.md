@@ -24,3 +24,4 @@ The arbiter was tested under simultaneous master requests and randomized slave b
 
 
 ## Add AXI-Lite Read Channel
+![Interconnect Waveform](sim/interconnect_waveform_W_and_R.png)
