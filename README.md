@@ -13,3 +13,4 @@ Slave outputs alternate between Master 0 and Master 1:
 - Data: BBBB → AAAA → BBBB → AAAA
 
 This confirms both fairness and correct data routing.
+sim/interconnect_waveform.png
