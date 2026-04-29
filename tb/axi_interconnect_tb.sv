@@ -26,6 +26,10 @@ module axi_interconnect_tb;
     logic        s_wvalid;
     logic        s_wready;
 
+    int m0_read_count;
+int m1_read_count;
+int read_error_count;
+
     axi_interconnect_2x1 dut (
         .clk(clk),
         .rst_n(rst_n),
@@ -57,6 +61,9 @@ module axi_interconnect_tb;
     initial begin
         clk = 0;
         rst_n = 0;
+        m0_read_count   = 0;
+m1_read_count   = 0;
+read_error_count = 0;
 
         m0_awaddr  = 32'h1000;
         m0_awvalid = 0;
@@ -264,4 +271,44 @@ m1_arvalid = 0;
         $display("M1 READ DATA: %h", m1_rdata);
 end
 
+    always @(posedge clk) begin
+    if (m0_rvalid && m0_rready) begin
+        m0_read_count++;
+
+        if (m0_rdata !== 32'h1100) begin
+            $display("M0 READ FAIL: expected=00001100 actual=%h", m0_rdata);
+            read_error_count++;
+        end
+        else begin
+            $display("M0 READ PASS: data=%h", m0_rdata);
+        end
+    end
+
+    if (m1_rvalid && m1_rready) begin
+        m1_read_count++;
+
+        if (m1_rdata !== 32'h2100) begin
+            $display("M1 READ FAIL: expected=00002100 actual=%h", m1_rdata);
+            read_error_count++;
+        end
+        else begin
+            $display("M1 READ PASS: data=%h", m1_rdata);
+        end
+    end
+end
+
+    final begin
+    $display("====================================");
+    $display("READ STRESS TEST RESULT");
+    $display("M0 read count   = %0d", m0_read_count);
+    $display("M1 read count   = %0d", m1_read_count);
+    $display("Read errors     = %0d", read_error_count);
+
+    if (read_error_count == 0 && m0_read_count > 0 && m1_read_count > 0)
+        $display("READ CHANNEL TEST PASS");
+    else
+        $display("READ CHANNEL TEST FAIL");
+
+    $display("====================================");
+end
     endmodule
