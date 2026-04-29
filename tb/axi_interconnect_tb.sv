@@ -111,4 +111,65 @@ module axi_interconnect_tb;
         $dumpvars(0, axi_interconnect_tb);
     end
 
-endmodule
+
+task random_master0();
+    forever begin
+        @(posedge clk);
+        if ($urandom_range(0,1)) begin
+            m0_awvalid <= 1;
+            m0_wvalid  <= 1;
+        end else begin
+            m0_awvalid <= 0;
+            m0_wvalid  <= 0;
+        end
+    end
+endtask
+
+task random_master1();
+    forever begin
+        @(posedge clk);
+        if ($urandom_range(0,1)) begin
+            m1_awvalid <= 1;
+            m1_wvalid  <= 1;
+        end else begin
+            m1_awvalid <= 0;
+            m1_wvalid  <= 0;
+        end
+    end
+endtask
+
+
+initial begin
+    @(posedge rst_n);
+
+    m0_awvalid = 1;
+    m0_wvalid  = 1;
+
+    m1_awvalid = 1;
+    m1_wvalid  = 1;
+end
+
+
+always @(posedge clk) begin
+    s_awready <= $urandom_range(0,1);
+    s_wready  <= $urandom_range(0,1);
+end
+
+
+int m0_count = 0;
+int m1_count = 0;
+
+always @(posedge clk) begin
+    if (m0_awready && m0_wready)
+        m0_count++;
+
+    if (m1_awready && m1_wready)
+        m1_count++;
+end
+
+final begin
+    $display("M0 count = %0d", m0_count);
+    $display("M1 count = %0d", m1_count);
+end
+
+    endmodule
